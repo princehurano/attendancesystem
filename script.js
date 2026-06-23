@@ -43,23 +43,19 @@ const STATUSES = ["present", "late", "absent"];
 
 const db = {
   classes: [
-    { id: "tvlios", name: "Grade 12 - IOS"},
-    { id: "c1", name: "Grade 7 - Narra" },
-    { id: "c2", name: "Grade 8 - Mahogany" },
+    { id: "tvlios1", name: "Grade 12 - IOS (ICT)"},
+    { id: "tvlios2", name: "Grade 12 - IOS (HE)"},
+
   ],
   students: [
-    { id: "s10", classId: "tvlios", name: "Fritz Vohn M. Dayday" },
-    { id: "s11", classId: "tvlios", name: "Prince Darwin Adajar Hurano" },
-    { id: "s12", classId: "tvlios", name: "Lloyd Justine Pelare" },
-    { id: "s1", classId: "c1", name: "Maria Santos" },
-    { id: "s2", classId: "c1", name: "Juan Dela Cruz" },
-    { id: "s3", classId: "c1", name: "Andrea Lim" },
-    { id: "s4", classId: "c1", name: "Carlos Reyes" },
-    { id: "s5", classId: "c1", name: "Bea Fernandez" },
-    { id: "s6", classId: "c2", name: "Miguel Torres" },
-    { id: "s7", classId: "c2", name: "Sofia Ramirez" },
-    { id: "s8", classId: "c2", name: "Liam Garcia" },
-    { id: "s9", classId: "c2", name: "Nadia Cruz" },
+    { id: "s1", classId: "tvlios1", name: "Fritz Vohn Dayday" },
+    { id: "s2", classId: "tvlios1", name: "Prince Darwin Hurano" },
+    { id: "s3", classId: "tvlios1", name: "Lloyd Justin Pelare" },
+    { id: "s4", classId: "tvlios2", name: "Jasmine Pahuyo" },
+    { id: "s5", classId: "tvlios2", name: "Rich Anne Saguing" },
+    { id: "s6", classId: "tvlios2", name: "Orlyn Ociones" },
+
+
   ],
   attendance: {},
 };
@@ -94,7 +90,7 @@ function recordKey(classId, date) {
 
   // First visit — seed 6 days of sample history
   const today = new Date();
-  for (let offset = 1; offset <= 6; offset++) {
+  for (let offset = 1; offset <= 0; offset++) {
     const d = new Date(today);
     d.setDate(d.getDate() - offset);
     const iso = d.toISOString().slice(0, 10);
