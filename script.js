@@ -1,25 +1,71 @@
+/* =========================================================================
+   STORAGE LAYER — localStorage persistence
+   ========================================================================= */
+
+const STORAGE_KEY = "attendance_db_v1";
+
+function saveToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(db.attendance));
+  } catch (e) {
+    console.warn("localStorage save failed:", e);
+  }
+}
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null) return false;
+    db.attendance = parsed;
+    return true;
+  } catch (e) {
+    console.warn("localStorage load failed:", e);
+    return false;
+  }
+}
+
+function clearStorage() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    db.attendance = {};
+  } catch (e) {
+    console.warn("localStorage clear failed:", e);
+  }
+}
+
+/* =========================================================================
+   DATA LAYER
+   ========================================================================= */
+
 const STATUSES = ["present", "late", "absent"];
 
 const db = {
   classes: [
-    { id: "tvlios1", name: "Grade 12 - IOS (ICT)"},
-    { id: "tvlios2", name: "Grade 12 - IOS (HE)"},
+    { id: "tvlios", name: "Grade 12 - IOS"},
+    { id: "c1", name: "Grade 7 - Narra" },
+    { id: "c2", name: "Grade 8 - Mahogany" },
   ],
   students: [
-    { id: "s1", classId: "tvlios1", name: "Fritz Vohn M. Dayday" },
-    { id: "s2", classId: "tvlios1", name: "Prince Darwin Adajar Hurano" },
-    { id: "s3", classId: "tvlios1", name: "Lloyd Justine Pelare" },
-    { id: "s4", classId: "tvlios2", name: "Rich Anne Saguing" },
-    { id: "s5", classId: "tvlios2", name: "Orlyn Mae Ociones" },
-    { id: "s6", classId: "tvlios2", name: "Jasmine Pahuyo" },
+    { id: "s10", classId: "tvlios", name: "Fritz Vohn M. Dayday" },
+    { id: "s11", classId: "tvlios", name: "Prince Darwin Adajar Hurano" },
+    { id: "s12", classId: "tvlios", name: "Lloyd Justine Pelare" },
+    { id: "s1", classId: "c1", name: "Maria Santos" },
+    { id: "s2", classId: "c1", name: "Juan Dela Cruz" },
+    { id: "s3", classId: "c1", name: "Andrea Lim" },
+    { id: "s4", classId: "c1", name: "Carlos Reyes" },
+    { id: "s5", classId: "c1", name: "Bea Fernandez" },
+    { id: "s6", classId: "c2", name: "Miguel Torres" },
+    { id: "s7", classId: "c2", name: "Sofia Ramirez" },
+    { id: "s8", classId: "c2", name: "Liam Garcia" },
+    { id: "s9", classId: "c2", name: "Nadia Cruz" },
   ],
-  // attendance: { "classId|date": { studentId: status } }
   attendance: {},
 };
 
 function todayISO() {
-  const d = new Date();
-  return d.toISOString().slice(0, 10);
+  return new Date().toISOString().slice(0, 10);
 }
 
 function formatDateLong(iso) {
@@ -36,10 +82,19 @@ function recordKey(classId, date) {
   return classId + "|" + date;
 }
 
-/* ---- seed some recent history so Daily Records / Summary aren't empty ---- */
-(function seed() {
+/* ---- Initialize: load from storage, or seed sample data if first visit ---- */
+(function initializeDatabase() {
+  const loaded = loadFromStorage();
+
+  if (loaded) {
+    // Data restored from a previous session
+    updateStorageStatus(true);
+    return;
+  }
+
+  // First visit — seed 6 days of sample history
   const today = new Date();
-  for (let offset = 1; offset <= 0; offset++) {
+  for (let offset = 1; offset <= 6; offset++) {
     const d = new Date(today);
     d.setDate(d.getDate() - offset);
     const iso = d.toISOString().slice(0, 10);
@@ -53,13 +108,24 @@ function recordKey(classId, date) {
       db.attendance[recordKey(cls.id, iso)] = dayRecord;
     });
   }
+
+  saveToStorage();
+  updateStorageStatus(false);
 })();
 
-/* ---- "backend" functions: the only way the UI touches data ---- */
-
-function getClasses() {
-  return db.classes;
+function updateStorageStatus(wasRestored) {
+  const el = document.getElementById("storageStatus");
+  if (!el) return;
+  if (wasRestored) {
+    el.innerHTML = ``;
+  } else {
+    el.innerHTML = ``;
+  }
 }
+
+/* ---- "backend" functions ---- */
+
+function getClasses() { return db.classes; }
 
 function getStudentsForClass(classId) {
   return db.students.filter((s) => s.classId === classId);
@@ -71,6 +137,7 @@ function getAttendanceForClassDate(classId, date) {
 
 function saveAttendanceForClassDate(classId, date, statusMap) {
   db.attendance[recordKey(classId, date)] = { ...statusMap };
+  saveToStorage(); // persist to localStorage on every save
   return true;
 }
 
@@ -136,7 +203,6 @@ function renderTake() {
   const students = getStudentsForClass(takeState.classId);
   const existing = getAttendanceForClassDate(takeState.classId, takeState.date);
 
-  // initialize draft from saved record (or default to "present") whenever class/date changes
   const draftKey = takeState.classId + "|" + takeState.date;
   if (takeState._loadedKey !== draftKey) {
     takeState.draft = {};
@@ -166,6 +232,7 @@ function renderTake() {
         <h2>Take Attendance</h2>
         <p>Mark every student, then save the day's record.</p>
       </div>
+      <span class="storage-badge">&#x1F4BE; Auto-saved</span>
     </div>
     <div class="controls-row">
       <div class="field">
@@ -179,7 +246,10 @@ function renderTake() {
     </div>
     <div class="roster">${rosterHTML || `<div class="empty-state">No students found for this class.</div>`}</div>
     <div class="roster-actions">
-      <button class="quick-mark" id="markAllPresent">Mark everyone present</button>
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <button class="quick-mark" id="markAllPresent">Mark everyone present</button>
+        <button class="danger-btn" id="clearDataBtn">Reset all data</button>
+      </div>
       <div style="display:flex; align-items:center; gap:14px;">
         <span class="save-confirm" id="saveConfirm">Saved &#10003;</span>
         <button class="primary-btn" id="saveAttendance">Save attendance</button>
@@ -187,7 +257,6 @@ function renderTake() {
     </div>
   `;
 
-  // reflect current draft state on buttons
   students.forEach((s) => {
     const group = panel.querySelector(`.status-group[data-student="${s.id}"]`);
     const current = takeState.draft[s.id];
@@ -225,6 +294,16 @@ function renderTake() {
     const confirm = document.getElementById("saveConfirm");
     confirm.classList.add("show");
     setTimeout(() => confirm.classList.remove("show"), 1600);
+  });
+
+  document.getElementById("clearDataBtn").addEventListener("click", () => {
+    if (window.confirm("This will permanently delete all attendance records from this browser. Are you sure?")) {
+      clearStorage();
+      takeState._loadedKey = null;
+      takeState.draft = {};
+      updateStorageStatus(false);
+      render();
+    }
   });
 }
 
