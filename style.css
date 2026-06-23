@@ -32,7 +32,6 @@
     padding: 28px 24px 60px;
   }
 
-  /* ---------- Header / chalkboard masthead ---------- */
   .masthead {
     background: var(--slate-deep);
     color: #f4f1e8;
@@ -76,7 +75,6 @@
     font-size: 1rem;
   }
 
-  /* ---------- Tab navigation, styled like a register's edge tabs ---------- */
   .tabs {
     display: flex;
     gap: 6px;
@@ -113,7 +111,6 @@
     outline-offset: 2px;
   }
 
-  /* ---------- Panel ---------- */
   .panel {
     background: var(--panel);
     border: 1px solid var(--line);
@@ -177,7 +174,6 @@
     min-width: 200px;
   }
 
-  /* ---------- Roster list for taking attendance ---------- */
   .roster {
     border-top: 1px solid var(--line);
   }
@@ -272,6 +268,20 @@
 
   .primary-btn:hover { background: var(--slate-deep); }
 
+  .danger-btn {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.78rem;
+    color: var(--chalk-red);
+    background: none;
+    border: 1px solid var(--chalk-red);
+    border-radius: 7px;
+    padding: 6px 14px;
+    cursor: pointer;
+    opacity: 0.7;
+  }
+
+  .danger-btn:hover { opacity: 1; }
+
   .save-confirm {
     font-family: "Helvetica Neue", Arial, sans-serif;
     font-size: 0.85rem;
@@ -283,7 +293,6 @@
 
   .save-confirm.show { opacity: 1; }
 
-  /* ---------- Daily record table ---------- */
   table.records {
     width: 100%;
     border-collapse: collapse;
@@ -329,7 +338,6 @@
     font-size: 0.92rem;
   }
 
-  /* ---------- Summary view ---------- */
   .summary-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -386,6 +394,20 @@
   }
 
   .history-row .date { color: var(--ink-soft); }
+
+  .storage-badge {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    color: var(--chalk-green);
+    background: var(--chalk-green-soft);
+    border: 1px solid var(--chalk-green);
+    border-radius: 999px;
+    padding: 3px 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
 
   footer.note {
     margin-top: 26px;
