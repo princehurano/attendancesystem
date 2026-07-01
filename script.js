@@ -1,7 +1,3 @@
-/* =========================================================================
-   STORAGE LAYER — localStorage persistence
-   ========================================================================= */
-
 const STORAGE_KEY = "attendance_db_v1";
 
 function saveToStorage() {
@@ -39,7 +35,42 @@ function clearStorage() {
    DATA LAYER
    ========================================================================= */
 
-const STATUSES = ["present", "late", "absent"];
+/*
+  Status values:
+  - "present"  -> present all day
+  - "late"     -> late, but present all day
+  - "half_am"  -> HALF DAY: present in the morning, absent in the afternoon
+  - "half_pm"  -> HALF DAY: absent in the morning, present in the afternoon
+  - "absent"   -> absent all day
+*/
+const STATUSES = ["present", "late", "half_am", "half_pm", "absent"];
+
+const STATUS_LABELS = {
+  present: "Present",
+  late: "Late",
+  half_am: "AM Only",
+  half_pm: "PM Only",
+  absent: "Absent",
+};
+
+const STATUS_TITLES = {
+  present: "Present the whole day",
+  late: "Arrived late, present the whole day",
+  half_am: "Present in the morning, absent in the afternoon",
+  half_pm: "Absent in the morning, present in the afternoon",
+  absent: "Absent the whole day",
+};
+
+function statusLabel(status) {
+  return STATUS_LABELS[status] || capitalize(status);
+}
+
+// Weight used when computing attendance rate: full day = 1, half day = 0.5, absent = 0
+function statusWeight(status) {
+  if (status === "present" || status === "late") return 1;
+  if (status === "half_am" || status === "half_pm") return 0.5;
+  return 0;
+}
 
 const db = {
   classes: [
@@ -147,20 +178,26 @@ function getAllDatesWithRecordsForClass(classId) {
 function getStudentSummary(studentId) {
   const student = db.students.find((s) => s.id === studentId);
   if (!student) return null;
-  const counts = { present: 0, late: 0, absent: 0 };
+  const counts = { present: 0, late: 0, half_am: 0, half_pm: 0, absent: 0 };
   const history = [];
   Object.keys(db.attendance).forEach((key) => {
     const [classId, date] = key.split("|");
     if (classId !== student.classId) return;
     const status = db.attendance[key][studentId];
     if (!status) return;
-    counts[status]++;
+    counts[status] = (counts[status] || 0) + 1;
     history.push({ date, status });
   });
   history.sort((a, b) => (a.date < b.date ? 1 : -1));
-  const total = counts.present + counts.late + counts.absent;
-  const rate = total > 0 ? Math.round(((counts.present + counts.late) / total) * 100) : 0;
-  return { student, counts, history, total, rate };
+  const total = counts.present + counts.late + counts.half_am + counts.half_pm + counts.absent;
+  const earnedDays =
+    counts.present * statusWeight("present") +
+    counts.late * statusWeight("late") +
+    counts.half_am * statusWeight("half_am") +
+    counts.half_pm * statusWeight("half_pm");
+  const rate = total > 0 ? Math.round((earnedDays / total) * 100) : 0;
+  const halfDayTotal = counts.half_am + counts.half_pm;
+  return { student, counts, halfDayTotal, history, total, rate };
 }
 
 /* =========================================================================
@@ -215,7 +252,7 @@ function renderTake() {
         <div class="name">${s.name}</div>
         <div class="status-group" data-student="${s.id}">
           ${STATUSES.map(
-            (st) => `<button class="status-btn" data-status="${st}" data-student="${s.id}">${capitalize(st)}</button>`
+            (st) => `<button class="status-btn" data-status="${st}" data-student="${s.id}" title="${STATUS_TITLES[st]}">${statusLabel(st)}</button>`
           ).join("")}
         </div>
       </div>
@@ -226,7 +263,7 @@ function renderTake() {
     <div class="panel-heading">
       <div>
         <h2>Take Attendance</h2>
-        <p>Mark every student, then save the day's record.</p>
+        <p>Mark every student, then save the day's record. Use "AM Only" / "PM Only" for half-day attendance.</p>
       </div>
       <span class="storage-badge">&#x1F4BE; Auto-saved</span>
     </div>
@@ -321,7 +358,7 @@ function renderDaily() {
       .map((s) => {
         const status = record[s.id];
         const pillClass = status || "none";
-        const label = status ? capitalize(status) : "Not marked";
+        const label = status ? statusLabel(status) : "Not marked";
         return `<tr><td>${s.name}</td><td><span class="pill ${pillClass}">${label}</span></td></tr>`;
       })
       .join("");
@@ -330,11 +367,12 @@ function renderDaily() {
   const tallies = students.reduce(
     (acc, s) => {
       const st = record && record[s.id];
-      if (st) acc[st]++;
+      if (st) acc[st] = (acc[st] || 0) + 1;
       return acc;
     },
-    { present: 0, late: 0, absent: 0 }
+    { present: 0, late: 0, half_am: 0, half_pm: 0, absent: 0 }
   );
+  const halfDayCount = tallies.half_am + tallies.half_pm;
 
   panel.innerHTML = `
     <div class="panel-heading">
@@ -355,7 +393,7 @@ function renderDaily() {
     </div>
     ${
       record
-        ? `<div class="rate-line"><strong>${tallies.present}</strong> present &middot; <strong>${tallies.late}</strong> late &middot; <strong>${tallies.absent}</strong> absent &middot; out of ${students.length} students</div>`
+        ? `<div class="rate-line"><strong>${tallies.present}</strong> present &middot; <strong>${tallies.late}</strong> late &middot; <strong>${halfDayCount}</strong> half day &middot; <strong>${tallies.absent}</strong> absent &middot; out of ${students.length} students</div>`
         : ""
     }
     <table class="records">
@@ -396,7 +434,7 @@ function renderSummary() {
   const historyHTML = data.history.length
     ? data.history
         .map(
-          (h) => `<div class="history-row"><span class="date">${formatDateShort(h.date)}</span><span class="pill ${h.status}">${capitalize(h.status)}</span></div>`
+          (h) => `<div class="history-row"><span class="date">${formatDateShort(h.date)}</span><span class="pill ${h.status}">${statusLabel(h.status)}</span></div>`
         )
         .join("")
     : `<div class="empty-state">No attendance history recorded yet for this student.</div>`;
@@ -417,9 +455,10 @@ function renderSummary() {
     <div class="summary-grid">
       <div class="stat-card present"><div class="stat-num">${data.counts.present}</div><div class="stat-label">Present</div></div>
       <div class="stat-card late"><div class="stat-num">${data.counts.late}</div><div class="stat-label">Late</div></div>
+      <div class="stat-card half" title="AM Only: ${data.counts.half_am} &middot; PM Only: ${data.counts.half_pm}"><div class="stat-num">${data.halfDayTotal}</div><div class="stat-label">Half Day</div></div>
       <div class="stat-card absent"><div class="stat-num">${data.counts.absent}</div><div class="stat-label">Absent</div></div>
     </div>
-    <div class="rate-line">Attendance rate over ${data.total} recorded day${data.total === 1 ? "" : "s"}: <strong>${data.rate}%</strong></div>
+    <div class="rate-line">Attendance rate over ${data.total} recorded day${data.total === 1 ? "" : "s"}: <strong>${data.rate}%</strong> <span style="opacity:0.75;">(half days count as 0.5)</span></div>
     <div class="history-list">${historyHTML}</div>
   `;
 
