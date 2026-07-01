@@ -12,6 +12,8 @@
     --chalk-amber-soft: #f4ead7;
     --chalk-red: #9c3b34;
     --chalk-red-soft: #f6e2df;
+    --chalk-blue: #345a7a;
+    --chalk-blue-soft: #e4ebf2;
     --focus: #2f4858;
     font-size: 16px;
   }
@@ -199,15 +201,17 @@
 
   .status-group {
     display: flex;
+    flex-wrap: wrap;
     gap: 6px;
+    justify-content: flex-end;
   }
 
   .status-btn {
     font-family: "Helvetica Neue", Arial, sans-serif;
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     font-weight: 600;
     letter-spacing: 0.03em;
-    padding: 7px 14px;
+    padding: 7px 12px;
     border-radius: 999px;
     border: 1.5px solid var(--line);
     background: var(--panel);
@@ -227,6 +231,12 @@
     background: var(--chalk-amber-soft);
     border-color: var(--chalk-amber);
     color: var(--chalk-amber);
+  }
+  .status-btn[data-status="half_am"].active,
+  .status-btn[data-status="half_pm"].active {
+    background: var(--chalk-blue-soft);
+    border-color: var(--chalk-blue);
+    color: var(--chalk-blue);
   }
   .status-btn[data-status="absent"].active {
     background: var(--chalk-red-soft);
@@ -327,6 +337,7 @@
 
   .pill.present { background: var(--chalk-green-soft); color: var(--chalk-green); }
   .pill.late { background: var(--chalk-amber-soft); color: var(--chalk-amber); }
+  .pill.half_am, .pill.half_pm { background: var(--chalk-blue-soft); color: var(--chalk-blue); }
   .pill.absent { background: var(--chalk-red-soft); color: var(--chalk-red); }
   .pill.none { background: #ececec; color: var(--ink-soft); }
 
@@ -340,7 +351,7 @@
 
   .summary-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 14px;
     margin-bottom: 24px;
   }
@@ -360,6 +371,7 @@
 
   .stat-card.present .stat-num { color: var(--chalk-green); }
   .stat-card.late .stat-num { color: var(--chalk-amber); }
+  .stat-card.half .stat-num { color: var(--chalk-blue); }
   .stat-card.absent .stat-num { color: var(--chalk-red); }
 
   .stat-card .stat-label {
@@ -419,7 +431,7 @@
   }
 
   @media (max-width: 640px) {
-    .summary-grid { grid-template-columns: 1fr; }
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
     .masthead { flex-direction: column; align-items: flex-start; }
     .masthead-date { text-align: left; }
     .roster-row { grid-template-columns: 1fr; }
