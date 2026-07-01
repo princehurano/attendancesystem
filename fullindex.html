@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Attendance Monitoring System</title>
+
+<style>
+    :root {
+    --ink: #1c2730;
+    --ink-soft: #5b6b75;
+    --paper: #f6f4ee;
+    --panel: #ffffff;
+    --line: #dcd7c9;
+    --slate: #2f4858;
+    --slate-deep: #1f323d;
+    --chalk-green: #3f6f5e;
+    --chalk-green-soft: #e7efe9;
+    --chalk-amber: #a3742a;
+    --chalk-amber-soft: #f4ead7;
+    --chalk-red: #9c3b34;
+    --chalk-red-soft: #f6e2df;
+    --focus: #2f4858;
+    font-size: 16px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Iowan Old Style", "Palatino Linotype", Georgia, "Times New Roman", serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 24px 60px;
+  }
+
+  .masthead {
+    background: var(--slate-deep);
+    color: #f4f1e8;
+    border-radius: 10px;
+    padding: 22px 26px;
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.06) inset, 0 8px 18px rgba(0,0,0,0.18);
+  }
+
+  .masthead-title {
+    font-family: "Palatino Linotype", Georgia, serif;
+    font-size: 1.5rem;
+    letter-spacing: 0.02em;
+    font-weight: 600;
+  }
+
+  .masthead-sub {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #c9d6cf;
+    margin-top: 4px;
+  }
+
+  .masthead-date {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.85rem;
+    color: #d9e2dc;
+    text-align: right;
+    line-height: 1.4;
+  }
+
+  .masthead-date strong {
+    display: block;
+    color: #fff;
+    font-size: 1rem;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 18px;
+    border-bottom: 2px solid var(--line);
+  }
+
+  .tab {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+    padding: 10px 18px;
+    background: transparent;
+    border: none;
+    color: var(--ink-soft);
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    position: relative;
+    top: 2px;
+  }
+
+  .tab:hover { color: var(--ink); }
+
+  .tab.active {
+    background: var(--panel);
+    color: var(--slate);
+    font-weight: 600;
+    border: 2px solid var(--line);
+    border-bottom: 2px solid var(--panel);
+  }
+
+  .tab:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 0 10px 10px 10px;
+    padding: 26px;
+    box-shadow: 0 1px 3px rgba(28,39,48,0.05);
+  }
+
+  .panel-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .panel-heading h2 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: var(--slate-deep);
+  }
+
+  .panel-heading p {
+    margin: 4px 0 0;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+
+  .controls-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: end;
+    margin-bottom: 20px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .field label {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  select, input[type="date"] {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.92rem;
+    padding: 9px 12px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: var(--paper);
+    color: var(--ink);
+    min-width: 200px;
+  }
+
+  .roster {
+    border-top: 1px solid var(--line);
+  }
+
+  .roster-row {
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 4px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .roster-row .num {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+
+  .roster-row .name {
+    font-size: 1.02rem;
+  }
+
+  .status-group {
+    display: flex;
+    gap: 6px;
+  }
+
+  .status-btn {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1.5px solid var(--line);
+    background: var(--panel);
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+  }
+
+  .status-btn:hover { border-color: var(--ink-soft); }
+
+  .status-btn[data-status="present"].active {
+    background: var(--chalk-green-soft);
+    border-color: var(--chalk-green);
+    color: var(--chalk-green);
+  }
+  .status-btn[data-status="late"].active {
+    background: var(--chalk-amber-soft);
+    border-color: var(--chalk-amber);
+    color: var(--chalk-amber);
+  }
+  .status-btn[data-status="absent"].active {
+    background: var(--chalk-red-soft);
+    border-color: var(--chalk-red);
+    color: var(--chalk-red);
+  }
+
+  .roster-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .quick-mark {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    background: none;
+    border: none;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .primary-btn {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 11px 22px;
+    border-radius: 7px;
+    border: none;
+    background: var(--slate);
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .primary-btn:hover { background: var(--slate-deep); }
+
+  .danger-btn {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.78rem;
+    color: var(--chalk-red);
+    background: none;
+    border: 1px solid var(--chalk-red);
+    border-radius: 7px;
+    padding: 6px 14px;
+    cursor: pointer;
+    opacity: 0.7;
+  }
+
+  .danger-btn:hover { opacity: 1; }
+
+  .save-confirm {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.85rem;
+    color: var(--chalk-green);
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .save-confirm.show { opacity: 1; }
+
+  table.records {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.9rem;
+  }
+
+  table.records th {
+    text-align: left;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    padding: 0 4px 10px;
+    border-bottom: 2px solid var(--line);
+  }
+
+  table.records td {
+    padding: 11px 4px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px 11px;
+    border-radius: 999px;
+  }
+
+  .pill.present { background: var(--chalk-green-soft); color: var(--chalk-green); }
+  .pill.late { background: var(--chalk-amber-soft); color: var(--chalk-amber); }
+  .pill.absent { background: var(--chalk-red-soft); color: var(--chalk-red); }
+  .pill.none { background: #ececec; color: var(--ink-soft); }
+
+  .empty-state {
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--ink-soft);
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.92rem;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 16px 18px;
+    text-align: center;
+  }
+
+  .stat-card .stat-num {
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .stat-card.present .stat-num { color: var(--chalk-green); }
+  .stat-card.late .stat-num { color: var(--chalk-amber); }
+  .stat-card.absent .stat-num { color: var(--chalk-red); }
+
+  .stat-card .stat-label {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-top: 6px;
+  }
+
+  .rate-line {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin-bottom: 18px;
+  }
+
+  .rate-line strong { color: var(--ink); }
+
+  .history-list {
+    border-top: 1px solid var(--line);
+  }
+
+  .history-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    padding: 10px 2px;
+    border-bottom: 1px solid var(--line);
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.88rem;
+  }
+
+  .history-row .date { color: var(--ink-soft); }
+
+  .storage-badge {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    color: var(--chalk-green);
+    background: var(--chalk-green-soft);
+    border: 1px solid var(--chalk-green);
+    border-radius: 999px;
+    padding: 3px 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  footer.note {
+    margin-top: 26px;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.76rem;
+    color: var(--ink-soft);
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 640px) {
+    .summary-grid { grid-template-columns: 1fr; }
+    .masthead { flex-direction: column; align-items: flex-start; }
+    .masthead-date { text-align: left; }
+    .roster-row { grid-template-columns: 1fr; }
+    .status-group { justify-content: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="masthead">
+    <div>
+      <div class="masthead-title">Attendance Monitoring System</div>
+      <div class="masthead-sub">Daily roll &middot; Class records &middot; Student summaries</div>
+    </div>
+    <div class="masthead-date">
+      <strong id="todayLabel">&mdash;</strong>
+      <span id="signedInLabel">Teacher view</span>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="take" role="tab">Take Attendance</button>
+    <button class="tab" data-tab="daily" role="tab">Daily Records</button>
+    <button class="tab" data-tab="summary" role="tab">Student Summary</button>
+  </div>
+
+  <div class="panel" id="panel"></div>
+
+  <footer class="note">
+    <span id="storageStatus"></span>
+  </footer>
+</div>
+
+<script>
+const STORAGE_KEY = "attendance_db_v1";
+
+function saveToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(db.attendance));
+  } catch (e) {
+    console.warn("localStorage save failed:", e);
+  }
+}
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null) return false;
+    db.attendance = parsed;
+    return true;
+  } catch (e) {
+    console.warn("localStorage load failed:", e);
+    return false;
+  }
+}
+
+function clearStorage() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    db.attendance = {};
+  } catch (e) {
+    console.warn("localStorage clear failed:", e);
+  }
+}
+
+/* =========================================================================
+   DATA LAYER
+   ========================================================================= */
+
+const STATUSES = ["present", "late", "absent"];
+
+const db = {
+  classes: [
+    { id: "tvlios1", name: "Grade 12 - IOS (ICT)"},
+    { id: "tvlios2", name: "Grade 12 - IOS (HE)"},
+
+  ],
+  students: [
+    { id: "s1", classId: "tvlios1", name: "Fritz Vohn Dayday" },
+    { id: "s2", classId: "tvlios1", name: "Prince Darwin Hurano" },
+    { id: "s3", classId: "tvlios1", name: "Lloyd Justin Pelare" },
+    { id: "s4", classId: "tvlios2", name: "Jasmine Pahuyo" },
+    { id: "s5", classId: "tvlios2", name: "Rich Anne Saguing" },
+    { id: "s6", classId: "tvlios2", name: "Orlyn Ociones" },
+
+
+  ],
+  attendance: {},
+};
+
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function formatDateLong(iso) {
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+}
+
+function formatDateShort(iso) {
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
+function recordKey(classId, date) {
+  return classId + "|" + date;
+}
+
+/* ---- Initialize: load from storage, or seed sample data if first visit ---- */
+(function initializeDatabase() {
+  const loaded = loadFromStorage();
+
+  if (loaded) {
+    // Data restored from a previous session
+    updateStorageStatus(true);
+    return;
+  }
+
+  // First visit — seed 6 days of sample history
+  const today = new Date();
+  for (let offset = 1; offset <= 0; offset++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - offset);
+    const iso = d.toISOString().slice(0, 10);
+    db.classes.forEach((cls) => {
+      const studentsInClass = db.students.filter((s) => s.classId === cls.id);
+      const dayRecord = {};
+      studentsInClass.forEach((stu) => {
+        const roll = Math.random();
+        dayRecord[stu.id] = roll < 0.82 ? "present" : roll < 0.93 ? "late" : "absent";
+      });
+      db.attendance[recordKey(cls.id, iso)] = dayRecord;
+    });
+  }
+
+  saveToStorage();
+  updateStorageStatus(false);
+})();
+
+function updateStorageStatus(wasRestored) {
+  const el = document.getElementById("storageStatus");
+  if (!el) return;
+  if (wasRestored) {
+    el.innerHTML = ``;
+  } else {
+    el.innerHTML = ``;
+  }
+}
+
+/* ---- "backend" functions ---- */
+
+function getClasses() { return db.classes; }
+
+function getStudentsForClass(classId) {
+  return db.students.filter((s) => s.classId === classId);
+}
+
+function getAttendanceForClassDate(classId, date) {
+  return db.attendance[recordKey(classId, date)] || null;
+}
+
+function saveAttendanceForClassDate(classId, date, statusMap) {
+  db.attendance[recordKey(classId, date)] = { ...statusMap };
+  saveToStorage(); // persist to localStorage on every save
+  return true;
+}
+
+function getAllDatesWithRecordsForClass(classId) {
+  return Object.keys(db.attendance)
+    .filter((key) => key.startsWith(classId + "|"))
+    .map((key) => key.split("|")[1])
+    .sort((a, b) => (a < b ? 1 : -1));
+}
+
+function getStudentSummary(studentId) {
+  const student = db.students.find((s) => s.id === studentId);
+  if (!student) return null;
+  const counts = { present: 0, late: 0, absent: 0 };
+  const history = [];
+  Object.keys(db.attendance).forEach((key) => {
+    const [classId, date] = key.split("|");
+    if (classId !== student.classId) return;
+    const status = db.attendance[key][studentId];
+    if (!status) return;
+    counts[status]++;
+    history.push({ date, status });
+  });
+  history.sort((a, b) => (a.date < b.date ? 1 : -1));
+  const total = counts.present + counts.late + counts.absent;
+  const rate = total > 0 ? Math.round(((counts.present + counts.late) / total) * 100) : 0;
+  return { student, counts, history, total, rate };
+}
+
+/* =========================================================================
+   FRONT END / UI LAYER
+   ========================================================================= */
+
+const panel = document.getElementById("panel");
+document.getElementById("todayLabel").textContent = formatDateLong(todayISO());
+
+let activeTab = "take";
+let takeState = { classId: db.classes[0].id, date: todayISO(), draft: {} };
+let dailyState = { classId: db.classes[0].id, date: todayISO() };
+let summaryState = { studentId: null };
+
+document.querySelectorAll(".tab").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    activeTab = btn.dataset.tab;
+    document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b === btn));
+    render();
+  });
+});
+
+function render() {
+  if (activeTab === "take") renderTake();
+  else if (activeTab === "daily") renderDaily();
+  else renderSummary();
+}
+
+/* ---------------- TAB 1: Take Attendance ---------------- */
+
+function renderTake() {
+  const classOptions = db.classes
+    .map((c) => `<option value="${c.id}" ${c.id === takeState.classId ? "selected" : ""}>${c.name}</option>`)
+    .join("");
+
+  const students = getStudentsForClass(takeState.classId);
+  const existing = getAttendanceForClassDate(takeState.classId, takeState.date);
+
+  const draftKey = takeState.classId + "|" + takeState.date;
+  if (takeState._loadedKey !== draftKey) {
+    takeState.draft = {};
+    students.forEach((s) => {
+      takeState.draft[s.id] = (existing && existing[s.id]) || "present";
+    });
+    takeState._loadedKey = draftKey;
+  }
+
+  const rosterHTML = students
+    .map((s, i) => `
+      <div class="roster-row">
+        <div class="num">${i + 1}.</div>
+        <div class="name">${s.name}</div>
+        <div class="status-group" data-student="${s.id}">
+          ${STATUSES.map(
+            (st) => `<button class="status-btn" data-status="${st}" data-student="${s.id}">${capitalize(st)}</button>`
+          ).join("")}
+        </div>
+      </div>
+    `)
+    .join("");
+
+  panel.innerHTML = `
+    <div class="panel-heading">
+      <div>
+        <h2>Take Attendance</h2>
+        <p>Mark every student, then save the day's record.</p>
+      </div>
+      <span class="storage-badge">&#x1F4BE; Auto-saved</span>
+    </div>
+    <div class="controls-row">
+      <div class="field">
+        <label for="takeClass">Class</label>
+        <select id="takeClass">${classOptions}</select>
+      </div>
+      <div class="field">
+        <label for="takeDate">Date</label>
+        <input type="date" id="takeDate" value="${takeState.date}" />
+      </div>
+    </div>
+    <div class="roster">${rosterHTML || `<div class="empty-state">No students found for this class.</div>`}</div>
+    <div class="roster-actions">
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <button class="quick-mark" id="markAllPresent">Mark everyone present</button>
+        <button class="danger-btn" id="clearDataBtn">Reset all data</button>
+      </div>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <span class="save-confirm" id="saveConfirm">Saved &#10003;</span>
+        <button class="primary-btn" id="saveAttendance">Save attendance</button>
+      </div>
+    </div>
+  `;
+
+  students.forEach((s) => {
+    const group = panel.querySelector(`.status-group[data-student="${s.id}"]`);
+    const current = takeState.draft[s.id];
+    group.querySelectorAll(".status-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.status === current);
+    });
+  });
+
+  document.getElementById("takeClass").addEventListener("change", (e) => {
+    takeState.classId = e.target.value;
+    renderTake();
+  });
+
+  document.getElementById("takeDate").addEventListener("change", (e) => {
+    takeState.date = e.target.value || todayISO();
+    renderTake();
+  });
+
+  panel.querySelectorAll(".status-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const studentId = btn.dataset.student;
+      takeState.draft[studentId] = btn.dataset.status;
+      const group = panel.querySelector(`.status-group[data-student="${studentId}"]`);
+      group.querySelectorAll(".status-btn").forEach((b) => b.classList.toggle("active", b === btn));
+    });
+  });
+
+  document.getElementById("markAllPresent").addEventListener("click", () => {
+    students.forEach((s) => (takeState.draft[s.id] = "present"));
+    renderTake();
+  });
+
+  document.getElementById("saveAttendance").addEventListener("click", () => {
+    saveAttendanceForClassDate(takeState.classId, takeState.date, takeState.draft);
+    const confirm = document.getElementById("saveConfirm");
+    confirm.classList.add("show");
+    setTimeout(() => confirm.classList.remove("show"), 1600);
+  });
+
+  document.getElementById("clearDataBtn").addEventListener("click", () => {
+    if (window.confirm("This will permanently delete all attendance records from this browser. Are you sure?")) {
+      clearStorage();
+      takeState._loadedKey = null;
+      takeState.draft = {};
+      updateStorageStatus(false);
+      render();
+    }
+  });
+}
+
+/* ---------------- TAB 2: Daily Records ---------------- */
+
+function renderDaily() {
+  const classOptions = db.classes
+    .map((c) => `<option value="${c.id}" ${c.id === dailyState.classId ? "selected" : ""}>${c.name}</option>`)
+    .join("");
+
+  const students = getStudentsForClass(dailyState.classId);
+  const record = getAttendanceForClassDate(dailyState.classId, dailyState.date);
+
+  let rowsHTML;
+  if (!record) {
+    rowsHTML = `<tr><td colspan="2"><div class="empty-state">No attendance has been recorded for this class on this date yet.</div></td></tr>`;
+  } else {
+    rowsHTML = students
+      .map((s) => {
+        const status = record[s.id];
+        const pillClass = status || "none";
+        const label = status ? capitalize(status) : "Not marked";
+        return `<tr><td>${s.name}</td><td><span class="pill ${pillClass}">${label}</span></td></tr>`;
+      })
+      .join("");
+  }
+
+  const tallies = students.reduce(
+    (acc, s) => {
+      const st = record && record[s.id];
+      if (st) acc[st]++;
+      return acc;
+    },
+    { present: 0, late: 0, absent: 0 }
+  );
+
+  panel.innerHTML = `
+    <div class="panel-heading">
+      <div>
+        <h2>Daily Records</h2>
+        <p>${formatDateLong(dailyState.date)}</p>
+      </div>
+    </div>
+    <div class="controls-row">
+      <div class="field">
+        <label for="dailyClass">Class</label>
+        <select id="dailyClass">${classOptions}</select>
+      </div>
+      <div class="field">
+        <label for="dailyDate">Date</label>
+        <input type="date" id="dailyDate" value="${dailyState.date}" />
+      </div>
+    </div>
+    ${
+      record
+        ? `<div class="rate-line"><strong>${tallies.present}</strong> present &middot; <strong>${tallies.late}</strong> late &middot; <strong>${tallies.absent}</strong> absent &middot; out of ${students.length} students</div>`
+        : ""
+    }
+    <table class="records">
+      <thead><tr><th>Student</th><th>Status</th></tr></thead>
+      <tbody>${rowsHTML}</tbody>
+    </table>
+  `;
+
+  document.getElementById("dailyClass").addEventListener("change", (e) => {
+    dailyState.classId = e.target.value;
+    renderDaily();
+  });
+
+  document.getElementById("dailyDate").addEventListener("change", (e) => {
+    dailyState.date = e.target.value || todayISO();
+    renderDaily();
+  });
+}
+
+/* ---------------- TAB 3: Student Summary ---------------- */
+
+function renderSummary() {
+  if (!summaryState.studentId) {
+    summaryState.studentId = db.students[0].id;
+  }
+
+  const studentOptionsByClass = db.classes
+    .map((cls) => {
+      const opts = getStudentsForClass(cls.id)
+        .map((s) => `<option value="${s.id}" ${s.id === summaryState.studentId ? "selected" : ""}>${s.name}</option>`)
+        .join("");
+      return `<optgroup label="${cls.name}">${opts}</optgroup>`;
+    })
+    .join("");
+
+  const data = getStudentSummary(summaryState.studentId);
+
+  const historyHTML = data.history.length
+    ? data.history
+        .map(
+          (h) => `<div class="history-row"><span class="date">${formatDateShort(h.date)}</span><span class="pill ${h.status}">${capitalize(h.status)}</span></div>`
+        )
+        .join("")
+    : `<div class="empty-state">No attendance history recorded yet for this student.</div>`;
+
+  panel.innerHTML = `
+    <div class="panel-heading">
+      <div>
+        <h2>Student Summary</h2>
+        <p>${data.student.name}</p>
+      </div>
+    </div>
+    <div class="controls-row">
+      <div class="field">
+        <label for="summaryStudent">Student</label>
+        <select id="summaryStudent">${studentOptionsByClass}</select>
+      </div>
+    </div>
+    <div class="summary-grid">
+      <div class="stat-card present"><div class="stat-num">${data.counts.present}</div><div class="stat-label">Present</div></div>
+      <div class="stat-card late"><div class="stat-num">${data.counts.late}</div><div class="stat-label">Late</div></div>
+      <div class="stat-card absent"><div class="stat-num">${data.counts.absent}</div><div class="stat-label">Absent</div></div>
+    </div>
+    <div class="rate-line">Attendance rate over ${data.total} recorded day${data.total === 1 ? "" : "s"}: <strong>${data.rate}%</strong></div>
+    <div class="history-list">${historyHTML}</div>
+  `;
+
+  document.getElementById("summaryStudent").addEventListener("change", (e) => {
+    summaryState.studentId = e.target.value;
+    renderSummary();
+  });
+}
+
+function capitalize(word) {
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+render();
+</script>
+
+</body>
+</html>
