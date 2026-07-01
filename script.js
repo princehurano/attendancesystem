@@ -31,18 +31,8 @@ function clearStorage() {
   }
 }
 
-/* =========================================================================
-   DATA LAYER
-   ========================================================================= */
+/* DATA LAYER */
 
-/*
-  Status values:
-  - "present"  -> present all day
-  - "late"     -> late, but present all day
-  - "half_am"  -> HALF DAY: present in the morning, absent in the afternoon
-  - "half_pm"  -> HALF DAY: absent in the morning, present in the afternoon
-  - "absent"   -> absent all day
-*/
 const STATUSES = ["present", "late", "half_am", "half_pm", "absent"];
 
 const STATUS_LABELS = {
@@ -200,9 +190,7 @@ function getStudentSummary(studentId) {
   return { student, counts, halfDayTotal, history, total, rate };
 }
 
-/* =========================================================================
-   FRONT END / UI LAYER
-   ========================================================================= */
+/* FRONT END / UI LAYER */
 
 const panel = document.getElementById("panel");
 document.getElementById("todayLabel").textContent = formatDateLong(todayISO());
@@ -226,7 +214,7 @@ function render() {
   else renderSummary();
 }
 
-/* ---------------- TAB 1: Take Attendance ---------------- */
+/* TAB 1: Take Attendance */
 
 function renderTake() {
   const classOptions = db.classes
@@ -340,7 +328,7 @@ function renderTake() {
   });
 }
 
-/* ---------------- TAB 2: Daily Records ---------------- */
+/* TAB 2: Daily Records */
 
 function renderDaily() {
   const classOptions = db.classes
@@ -413,7 +401,7 @@ function renderDaily() {
   });
 }
 
-/* ---------------- TAB 3: Student Summary ---------------- */
+/* TAB 3: Student Summary */
 
 function renderSummary() {
   if (!summaryState.studentId) {
